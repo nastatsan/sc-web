@@ -155,6 +155,22 @@ SCWeb.ui.WindowManager = {
         });
     },
 
+        /**
+     * Activate previously opened window or append new one if it doesn't exist
+     * @param {String} question_addr sc-addr of item to append into history
+     * @param {SCWeb.core.CommandState} command_state structure with command's address, arguments and output format
+     */
+    activateWindow: function (question_addr, command_state) {
+        if(!command_state.format) return;
+
+        const id = this.hash_addr(question_addr, command_state.format)
+        if (this.isWindowExist(id)) {
+            return this.setWindowActive(id);
+        }
+        this.appendWindow(question_addr, command_state);
+        this.window_active_formats[question_addr] = command_state.format;
+    },
+
     /**
      * Removes specified history item
      * @param {String} addr sc-addr of item to remove from history

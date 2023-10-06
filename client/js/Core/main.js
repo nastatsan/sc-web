@@ -41,6 +41,11 @@ const viewModes = {
     'distance_based_scg_view': SCgViewMode.DistanceBasedSCgView,
 };
 
+const ScModes = {
+    'scg': 'format_scg_json',
+    'scn': 'format_scn_json',
+};
+
 function ScClientCreate() {
     let res, rej;
     let scClient = new sc.ScClient(serverHost);
@@ -109,6 +114,17 @@ SCWeb.core.Main = {
             SCWeb.core.ComponentManager.init(),
             SCWeb.core.Translation.update()
         ]);
+        const addrs = await SCWeb.core.Server.resolveScAddr(["format_scg_json", "lang_en"]);
+
+        const renderScg = (question, lang = addrs["lang_en"]) => {
+            SCWeb.core.Translation.setLanguage(lang);
+            $('#create-fragment-input').val('');
+            const commandState = new SCWeb.core.CommandState(undefined, undefined, addrs["format_scg_json"], lang);
+            SCWeb.ui.WindowManager.activateWindow(question, commandState);
+        }
+        window.renderScg = renderScg;
+        window.onInitializationFinished?.();
+
     },
 
     pageShowedForUrlParameters(urlObject) {
@@ -129,31 +145,47 @@ SCWeb.core.Main = {
     },
 
     systemIdentifierParameterProcessed(urlObject) {
-        const lang = urlObject['lang'];
-        const window_lang = window.scKeynodes[lang];
-        if (window_lang) SCWeb.core.Translation.fireLanguageChanged(window_lang);
+        // const lang = urlObject['lang'];
+        // const window_lang = window.scKeynodes[lang];
+        // if (window_lang) SCWeb.core.Translation.fireLanguageChanged(window_lang);
 
-        const sysId = urlObject['sys_id'];
-        if (!sysId) return false;
-        SCWeb.core.Main.doDefaultCommandWithSystemIdentifier(sysId);
+        // const sysId = urlObject['sys_id'];
+        // if (!sysId) return false;
+        // //SCWeb.core.Main.doDefaultCommandWithSystemIdentifier(sysId);
 
-        const viewMode = Number(urlObject['view_mode']);
-        const editMode = Number(urlObject['edit_mode']);
+        // const fmt = ScModes[urlObject['format']];
+        // const self = this;
+        // SCWeb.core.Server.resolveScAddr([sysId, fmt, self.default_cmd_str]).then(function (result) {
+        //     const sys_id_addr = result[sysId];
+        //     const fmt_addr = result[fmt];
+        //     self.default_cmd = result[self.default_cmd_str];
+        //     self.doCommandWithFormat(self.default_cmd, [sys_id_addr], fmt_addr);
+        //     //await SCWeb.core.Main.doDefaultCommandWithFormat([sys_id_addr], fmt_addr);
+        // });
 
-        SCWeb.core.Main.viewMode = viewMode ?? 0;
-        SCWeb.core.Main.editMode = editMode ?? 0;
+        // const viewMode = Number(urlObject['view_mode']);
+        // const editMode = Number(urlObject['edit_mode']);
 
-        // backward compatibility [scg_structure_view_only <- full_screen_scg]
-        const fullScreenView = urlObject['full_screen_scg']
-            ? urlObject['full_screen_scg']
-            : urlObject['scg_structure_view_only'];
-        const hideTools = urlObject['hide_tools'];
-        const hideBorders = urlObject['hide_borders'];
+        // SCWeb.core.Main.viewMode = viewMode ?? 0;
+        // SCWeb.core.Main.editMode = editMode ?? 0;
 
-        if (fullScreenView) {
-            this.initFullScreenView(hideTools, hideBorders);
+        // // backward compatibility [scg_structure_view_only <- full_screen_scg]
+        // const fullScreenView = urlObject['full_screen_scg']
+        //     ? urlObject['full_screen_scg']
+        //     : urlObject['scg_structure_view_only'];
+        // const hideTools = urlObject['hide_tools'];
+        // const hideBorders = urlObject['hide_borders'];
+
+        // if (fullScreenView) {
+        //     this.initFullScreenView(hideTools, hideBorders);
+        // }
+        // return true;
+        const sys_id = urlObject['sys_id'];
+        if (sys_id) {
+            SCWeb.core.Main.doDefaultCommandWithSystemIdentifier(sys_id);
+            window.history.replaceState(null, null, window.location.pathname);
+            return true;
         }
-        return true;
     },
 
     initFullScreenView(hideTools, hideBorders) {
@@ -355,14 +387,25 @@ SCWeb.core.Main = {
      * @param {string} sys_id System identifier
      */
     doDefaultCommandWithSystemIdentifier: function (sys_id) {
-        SCWeb.core.Server.resolveScAddr([sys_id]).then(function (addrs) {
+
+        const fmt_addr = 'format_scg_json';
+        SCWeb.core.Server.resolveScAddr([sys_id, fmt_addr]).then(function (addrs) {
             const resolvedId = addrs[sys_id];
+            const resolvedFmtId = addrs[fmt_addr];
             if (resolvedId) {
-                SCWeb.core.Main.doDefaultCommand([resolvedId]);
+                SCWeb.core.Main.doDefaultCommandWithFormat([resolvedId], resolvedFmtId);
             } else {
                 SCWeb.core.Main.doDefaultCommandWithSystemIdentifier('ui_start_sc_element');
             }
         });
+        // SCWeb.core.Server.resolveScAddr([sys_id]).then(function (addrs) {
+        //     const resolvedId = addrs[sys_id];
+        //     if (resolvedId) {
+        //         SCWeb.core.Main.doDefaultCommand([resolvedId]);
+        //     } else {
+        //         SCWeb.core.Main.doDefaultCommandWithSystemIdentifier('ui_start_sc_element');
+        //     }
+        // });
     },
 
     /**

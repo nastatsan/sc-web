@@ -162,6 +162,13 @@ module.exports = function(grunt) {
                 expand: true,
                 flatten: true
             },
+            redesignCss: {
+                cwd: scgDirPath + 'static/components/css/',
+                src: 'redesign.css',
+                dest: clientCssDirPath,
+                expand: true,
+                flatten: true
+            },
             scsCss: {
                 cwd: scsDirPath + 'static/components/css/',
                 src: 'scs.css',
@@ -237,6 +244,10 @@ module.exports = function(grunt) {
             scgCss: {
                 files: scgDirPath + 'static/components/css/**',
                 tasks: ['copy:scgCss'],
+            },
+            redesignCss: {
+                files: scgDirPath + 'static/components/css/**',
+                tasks: ['copy:redesignCss'],
             },
             scsCss: {
                 files: scsDirPath + 'static/components/css/**',
